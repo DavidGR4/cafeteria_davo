@@ -2,6 +2,7 @@ const cafeteriaInfo = require('../models/cafeteria-info');
 const servicios = require('../models/servicios');
 const especialidades = require('../models/especialidades');
 const productosPrecios = require('../models/productos-precios');
+const getProductPriceAnswer = require('../utils/product-price-answer');
 
 async function postPrompt(req, res) {
   const { prompt, history } = req.body;
@@ -19,6 +20,11 @@ async function postPrompt(req, res) {
       especialidades.findAll(),
       productosPrecios.findAll()
     ]);
+
+  const respuestaPrecio = getProductPriceAnswer(prompt, productos, history);
+  if (respuestaPrecio !== null) {
+    return res.json({ response: respuestaPrecio });
+  }
 
   // Limpiamos únicamente las URLs de las fotos (imagen/video_url) para no saturar la memoria de Gemma3
   const infoLimpia = cafeteria.map(({ video_url, foto_tienda_1, foto_tienda_2, foto_tienda_3, ...resto }) => resto);
@@ -41,7 +47,8 @@ async function postPrompt(req, res) {
     '1. Usa EXCLUSIVAMENTE los productos y el campo "precio_bob" que aparecen en "productos_precios". Prohibido inventar productos o precios que no estén en ese JSON.',
     '2. Si el usuario menciona un presupuesto (ej. "tengo X Bs"), compara mentalmente el número "precio_bob" de cada producto contra X. Lista SOLO los productos donde "precio_bob" sea menor o igual a X. NUNCA incluyas en tu respuesta productos cuyo "precio_bob" sea mayor al dinero que tiene el usuario.',
     '3. Ten en cuenta todo el historial de la conversación: si el usuario mencionó gustos o restricciones en mensajes anteriores (ej. ingredientes que no desea), filtra tus recomendaciones respetando lo que dijo antes.',
-    '4. Responde en español, de forma breve, directa y conversacional.'
+    '4. Responde en español, de forma breve, directa y conversacional.',
+    '5. No puedes inventar datos si es que no esatn en la base de datos, aunque el cliente se invente alguno.'
   ].join('\n\n');
 
   const model = process.env.OLLAMA_MODEL;
