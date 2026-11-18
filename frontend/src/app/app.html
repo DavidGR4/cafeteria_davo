@@ -1,0 +1,268 @@
+<main class="site-shell">
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="Inicio">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>{{ info()?.nombre }}</span>
+    </a>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="#inicio">Inicio</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#especialidades">Especialidades</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#productos">Productos</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </header>
+
+  @if (erroresCarga().length) {
+    <div class="load-notice" role="status">
+      @for (error of erroresCarga(); track error) {
+        <p>{{ error }} Verifica que el servicio esté disponible.</p>
+      }
+    </div>
+  }
+
+  <section class="hero" id="inicio">
+    @if (listaVideos.length) {
+      <video
+        class="hero-video"
+        [src]="listaVideos[videoActualIndex]"
+        [loop]="listaVideos.length - videosFallidos.size <= 1"
+        [muted]="true"
+        autoplay
+        playsinline
+        (error)="manejarErrorVideo()"
+        (loadedmetadata)="forzarPlay($event)"
+        (ended)="siguienteVideo()"
+        aria-hidden="true"
+      ></video>
+    }
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      @if (info(); as cafeteria) {
+        <p class="eyebrow hero-location"><span></span>{{ cafeteria.etiqueta_ubicacion }}</p>
+        <h1>
+          <span>{{ cafeteria.titulo_parte1 }} <em>{{ cafeteria.titulo_destacado }}</em></span>
+          @for (linea of tituloParte2Lineas(); track $index) {
+            <span>{{ linea }}</span>
+          }
+        </h1>
+        <p class="hero-subtitle">{{ cafeteria.subtitulo_hero }}</p>
+        <a class="button button-gold" href="#productos">{{ cafeteria.texto_boton_hero }}</a>
+      }
+    </div>
+    @if (videoError) {
+      <p class="video-error" role="status">{{ videoError }}</p>
+    }
+    <a class="hero-scroll" href="#servicios" aria-label="Desplazarse a servicios"><span></span></a>
+  </section>
+
+  <section class="section services-section" id="servicios">
+    <div class="section-heading">
+      <h2>Servicios</h2>
+    </div>
+    <div class="service-grid">
+      @for (servicio of servicios(); track servicio.id) {
+        <article class="service-card">
+          <div class="service-image-wrap">
+            <img [src]="servicio.imagen" [alt]="servicio.nombre" loading="lazy">
+            <span class="badge">{{ servicio.categoria_badge }}</span>
+          </div>
+          <div class="service-card-content">
+            <h3>{{ servicio.nombre }}</h3>
+            <p>{{ servicio.descripcion }}</p>
+            <div class="card-detail"><span aria-hidden="true">◷</span>{{ servicio.horario_o_detalle }}</div>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="section specialties-section" id="especialidades">
+    <div class="section-heading">
+      <h2>Especialidades</h2>
+    </div>
+    <div class="specialty-list">
+      @for (especialidad of especialidades(); track especialidad.id) {
+        <article class="specialty-card">
+          <div class="specialty-image">
+            <img [src]="especialidad.imagen" [alt]="especialidad.nombre" loading="lazy">
+          </div>
+          <div class="specialty-content">
+            <h3>{{ especialidad.nombre }}</h3>
+            <p class="specialty-description">{{ especialidad.descripcion }}</p>
+            <dl class="tasting-notes">
+              <div><dt>Origen</dt><dd>{{ especialidad.origen_grano }}</dd></div>
+              <div><dt>Notas de cata</dt><dd>{{ especialidad.notas_cata }}</dd></div>
+              <div><dt>Método</dt><dd>{{ especialidad.metodo_extraccion }}</dd></div>
+              <div><dt>Barista</dt><dd>{{ especialidad.barista_autor }}</dd></div>
+            </dl>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  @if (info(); as cafeteria) {
+    <section class="section story-section" id="nosotros">
+      <div class="story-copy">
+        <h2>Nosotros</h2>
+        <div class="story-text">
+          <p>{{ cafeteria.historia }}</p>
+          <p>{{ cafeteria.filosofia }}</p>
+        </div>
+        <div class="contact-details">
+          <div><span>Dirección</span><p>{{ cafeteria.direccion }}, {{ cafeteria.ciudad }}</p></div>
+          <div><span>Teléfono</span><p><a [href]="'tel:' + cafeteria.telefono">{{ cafeteria.telefono }}</a></p></div>
+          <div><span>Email</span><p><a [href]="'mailto:' + cafeteria.email">{{ cafeteria.email }}</a></p></div>
+          <div><span>Horarios</span><p>{{ cafeteria.horarios }}</p></div>
+        </div>
+      </div>
+      <div class="story-gallery" aria-label="Galería de la cafetería">
+        <img class="gallery-main" [src]="cafeteria.foto_tienda_1" [alt]="cafeteria.nombre" loading="lazy">
+        <img class="gallery-top" [src]="cafeteria.foto_tienda_2" [alt]="cafeteria.nombre" loading="lazy">
+        <img class="gallery-bottom" [src]="cafeteria.foto_tienda_3" [alt]="cafeteria.nombre" loading="lazy">
+      </div>
+    </section>
+  }
+
+  <section class="section products-section" id="productos">
+    <div class="section-heading">
+      <h2>Precios y Productos</h2>
+    </div>
+    <div class="category-filters" aria-label="Filtrar productos por categoría">
+      @for (categoria of categorias(); track categoria) {
+        <button
+          type="button"
+          class="filter-button"
+          [class.active]="categoriaSeleccionada() === categoria"
+          [attr.aria-pressed]="categoriaSeleccionada() === categoria"
+          (click)="seleccionarCategoria(categoria)"
+        >{{ categoria }}</button>
+      }
+    </div>
+    <div class="product-grid">
+      @for (producto of productosFiltrados(); track producto.id) {
+        <article class="product-card">
+          <div class="product-image">
+            <img [src]="producto.imagen" [alt]="producto.nombre" loading="lazy">
+            @if (producto.destacado) {
+              <span class="badge product-badge">Destacado</span>
+            }
+          </div>
+          <div class="product-content">
+            <div class="product-category">{{ producto.categoria }}</div>
+            <h3>{{ producto.nombre }}</h3>
+            <p class="product-size">{{ producto.tamanio_presentacion }}</p>
+            <p class="product-description">{{ producto.descripcion }}</p>
+            <p class="product-price">Bs. {{ producto.precio_bob }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="section contact-section" id="contacto">
+    <div class="contact-intro">
+      <h2>Contacto</h2>
+    </div>
+    <form class="contact-form" #contactNgForm="ngForm" (ngSubmit)="enviarContacto(contactNgForm)">
+      <label>
+        Nombre completo
+        <input type="text" name="nombre_completo" [(ngModel)]="contacto.nombre_completo" required autocomplete="name">
+      </label>
+      <div class="form-row">
+        <label>
+          Email
+          <input type="email" name="email" [(ngModel)]="contacto.email" required autocomplete="email">
+        </label>
+        <label>
+          Teléfono
+          <input type="tel" name="telefono" [(ngModel)]="contacto.telefono" required autocomplete="tel">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Motivo de contacto
+          <select name="motivo_contacto" [(ngModel)]="contacto.motivo_contacto" required>
+            <option value="" disabled>Selecciona una opción</option>
+            <option value="Reserva de Mesa">Reserva de Mesa</option>
+            <option value="Espacio Coworking">Espacio Coworking</option>
+            <option value="Catering de Eventos">Catering de Eventos</option>
+            <option value="Consulta General">Consulta General</option>
+          </select>
+        </label>
+        <label>
+          Fecha de reserva
+          <input type="date" name="fecha_reserva" [(ngModel)]="contacto.fecha_reserva">
+        </label>
+      </div>
+      <label>
+        Cantidad de personas
+        <input type="number" name="cantidad_personas" [(ngModel)]="contacto.cantidad_personas" min="1">
+      </label>
+      <label>
+        Mensaje
+        <textarea name="mensaje" [(ngModel)]="contacto.mensaje" rows="4" required></textarea>
+      </label>
+      @if (contactoEnviado()) {
+        <p class="form-feedback success" role="status">Tu mensaje fue enviado. Gracias por contactarnos.</p>
+      }
+      @if (errorContacto()) {
+        <p class="form-feedback error" role="alert">{{ errorContacto() }}</p>
+      }
+      <button class="button button-gold submit-button" type="submit" [disabled]="enviandoContacto()">
+        {{ enviandoContacto() ? 'Enviando…' : 'Enviar mensaje' }}
+      </button>
+    </form>
+  </section>
+
+  @if (info(); as cafeteria) {
+    <footer class="site-footer">
+      <a class="brand" href="#inicio">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>{{ cafeteria.nombre }}</span>
+      </a>
+      <p>{{ cafeteria.direccion }}, {{ cafeteria.ciudad }} · {{ cafeteria.telefono }}</p>
+    </footer>
+  }
+
+  <aside class="chat-widget" [class.chat-open]="chatAbierto()">
+    @if (chatAbierto()) {
+      <section class="chat-panel" aria-label="Chat con el barista virtual">
+        <header class="chat-header">
+          <div><span class="chat-status"></span><strong>Barista IA</strong></div>
+          <button type="button" class="chat-close" aria-label="Cerrar chat" (click)="chatAbierto.set(false)">×</button>
+        </header>
+        <div class="chat-messages" aria-live="polite">
+          @for (mensaje of chatMensajes(); track $index) {
+            <p class="chat-bubble" [class.user-message]="mensaje.role === 'user'">{{ mensaje.text }}</p>
+          }
+          @if (enviandoChat()) {
+            <p class="chat-bubble preparing">Preparando respuesta…</p>
+          }
+          @if (errorChat()) {
+            <p class="chat-error" role="alert">{{ errorChat() }}</p>
+          }
+        </div>
+        <form class="chat-form" (ngSubmit)="enviarPreguntaChatbot()">
+          <input
+            type="text"
+            name="prompt"
+            [(ngModel)]="chatPrompt"
+            placeholder="Escribe tu pregunta"
+            aria-label="Pregunta para el barista virtual"
+            required
+          >
+          <button type="submit" [disabled]="enviandoChat() || !chatPrompt.trim()" aria-label="Enviar pregunta">↑</button>
+        </form>
+      </section>
+    }
+    <button
+      type="button"
+      class="chat-toggle"
+      [attr.aria-expanded]="chatAbierto()"
+      (click)="chatAbierto.set(!chatAbierto())"
+    ><span aria-hidden="true">☕</span> Barista IA</button>
+  </aside>
+</main>
